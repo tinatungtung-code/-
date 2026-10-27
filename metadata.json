@@ -1,0 +1,6 @@
+{
+  "name": "經典打磚塊 (Neon Brick Breaker)",
+  "description": "經典街機打磚塊遊戲，具備多種特殊磚塊、掉落道具、多重球、雷射砲台與流暢打擊感。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-Hant" class="h-full bg-slate-950 text-slate-100 select-none">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>經典打磚塊 (Neon Brick Breaker)</title>
+    <meta name="description" content="經典街機打磚塊遊戲，具備多種特殊磚塊、掉落道具、多重球、雷射砲台與流暢打擊感。" />
+    <meta property="og:title" content="經典打磚塊 (Neon Brick Breaker)" />
+    <meta property="og:description" content="經典街機打磚塊遊戲，具備多種特殊磚塊、掉落道具、多重球、雷射砲台與流暢打擊感。" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body class="h-full w-full overflow-hidden bg-slate-950 flex flex-col items-center justify-center p-2 sm:p-4 font-sans antialiased" data-state="title">
+
+    <!-- Main Game Container -->
+    <main class="relative w-full max-w-4xl h-full max-h-[850px] flex flex-col items-center justify-between overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/60 shadow-2xl backdrop-blur-sm">
+      
+      <!-- Top HUD (In-Game Heads-Up Display) -->
+      <header class="w-full flex items-center justify-between px-3 sm:px-6 py-2.5 border-b border-slate-800/80 bg-slate-950/80 z-20">
+        <!-- Left: Score & High Score -->
+        <div class="flex items-center gap-3 sm:gap-6">
+          <div class="flex flex-col">
+            <span class="text-[10px] tracking-wider uppercase text-slate-400 font-bold">SCORE</span>
+            <span id="hud-score" class="text-base sm:text-xl font-mono font-bold text-cyan-400 tracking-wider">000000</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[10px] tracking-wider uppercase text-slate-400 font-bold">BEST</span>
+            <span id="hud-highscore" class="text-base sm:text-xl font-mono font-bold text-amber-400 tracking-wider">000000</span>
+          </div>
+          <div class="hidden sm:flex flex-col">
+            <span class="text-[10px] tracking-wider uppercase text-slate-400 font-bold">STAGE</span>
+            <span id="hud-stage" class="text-base sm:text-xl font-mono font-bold text-emerald-400">1 / 5</span>
+          </div>
+        </div>
+
+        <!-- Center: Active Powerups Bar -->
+        <div id="hud-powerups" class="flex items-center gap-2 overflow-x-auto max-w-[200px] sm:max-w-[340px]">
+          <!-- Dynamically populated power-up badges -->
+        </div>
+
+        <!-- Right: Lives & Utility Buttons -->
+        <div class="flex items-center gap-2 sm:gap-4">
+          <div id="hud-lives" class="flex items-center gap-1 text-sm sm:text-base mr-1">
+            <!-- Dynamically populated hearts -->
+          </div>
+          <button id="btn-mute" type="button" aria-label="靜音切換" class="w-8 h-8 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs flex items-center justify-center cursor-pointer transition text-cyan-400">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current stroke-2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </button>
+          <button id="btn-pause" type="button" aria-label="暫停遊戲" class="w-8 h-8 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs flex items-center justify-center cursor-pointer transition text-slate-300">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current stroke-2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Center Playfield Area -->
+      <div class="relative w-full flex-1 flex items-center justify-center p-1 sm:p-3 overflow-hidden">
+        <!-- Canvas surface -->
+        <canvas id="game-canvas" class="w-full h-full max-w-[800px] max-h-[600px] aspect-[4/3] rounded-lg border border-slate-800 shadow-inner cursor-crosshair touch-none"></canvas>
+
+        <!-- SCREEN: Title Screen -->
+        <section id="screen-title" class="absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+          <div class="max-w-md w-full flex flex-col items-center">
+            
+            <!-- Arcade Title Emblem -->
+            <div class="mb-5 flex flex-col items-center">
+              <div class="flex items-center gap-2 text-cyan-400 mb-1">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                <span class="text-xs uppercase tracking-widest font-mono font-bold text-cyan-300">NEON ARCADE</span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+              </div>
+              <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]">
+                經典打磚塊
+              </h1>
+              <p class="text-xs text-slate-400 mt-1 font-mono">BRICK BREAKER DELUXE</p>
+            </div>
+
+            <!-- Difficulty Settings -->
+            <div class="w-full mb-4">
+              <label class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">選擇難度</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" data-difficulty="casual" class="py-2 px-1 text-xs font-semibold rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  休閒 Casual
+                </button>
+                <button type="button" data-difficulty="normal" class="active py-2 px-1 text-xs font-semibold rounded border border-cyan-400 bg-cyan-500/20 text-cyan-300 cursor-pointer transition">
+                  經典 Normal
+                </button>
+                <button type="button" data-difficulty="arcade" class="py-2 px-1 text-xs font-semibold rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  街機狂熱
+                </button>
+              </div>
+            </div>
+
+            <!-- Stage Select -->
+            <div class="w-full mb-5">
+              <label class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">選擇關卡</label>
+              <div class="grid grid-cols-5 gap-1.5">
+                <button type="button" data-stage="0" class="active py-1.5 text-xs font-bold font-mono rounded border border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer transition">
+                  01
+                </button>
+                <button type="button" data-stage="1" class="py-1.5 text-xs font-bold font-mono rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  02
+                </button>
+                <button type="button" data-stage="2" class="py-1.5 text-xs font-bold font-mono rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  03
+                </button>
+                <button type="button" data-stage="3" class="py-1.5 text-xs font-bold font-mono rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  04
+                </button>
+                <button type="button" data-stage="4" class="py-1.5 text-xs font-bold font-mono rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 cursor-pointer transition">
+                  05
+                </button>
+              </div>
+            </div>
+
+            <!-- Start Button -->
+            <button id="btn-start" type="button" data-start="true" class="w-full py-3.5 px-6 rounded-lg font-bold text-base bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/30 cursor-pointer transition transform active:scale-95 mb-4">
+              開始遊戲 (Start Game)
+            </button>
+
+            <!-- Quick Features / Power-up icons guide -->
+            <div class="w-full py-2 px-3 rounded bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400 flex flex-wrap justify-center gap-x-3 gap-y-1">
+              <span>💣 炸彈連鎖</span>
+              <span>⭐ 神秘道具</span>
+              <span>⚡ 雷射砲台</span>
+              <span>🔵 多重球</span>
+              <span>🔥 貫穿火球</span>
+              <span>🛡️ 防護底線</span>
+            </div>
+
+            <!-- Control Clues -->
+            <p class="text-[11px] text-slate-500 mt-4">
+              鍵盤 <kbd class="px-1 py-0.5 bg-slate-800 rounded">←</kbd> <kbd class="px-1 py-0.5 bg-slate-800 rounded">→</kbd> 或滑鼠拖曳移動 · <kbd class="px-1 py-0.5 bg-slate-800 rounded">Space</kbd> 發射/雷射 · <kbd class="px-1 py-0.5 bg-slate-800 rounded">P</kbd> 暫停
+            </p>
+          </div>
+        </section>
+
+        <!-- SCREEN: Pause Modal -->
+        <section id="screen-pause" class="hidden absolute inset-0 bg-slate-950/85 z-30 flex flex-col items-center justify-center p-4">
+          <div class="max-w-sm w-full p-6 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl text-center">
+            <h2 class="text-2xl font-bold text-white mb-2">遊戲暫停</h2>
+            <p class="text-xs text-slate-400 mb-6">按 P 或 Esc 鍵可快速切換</p>
+
+            <div class="flex flex-col gap-3">
+              <button id="btn-resume" type="button" class="w-full py-2.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold cursor-pointer transition">
+                繼續遊戲 (Resume)
+              </button>
+              <button id="btn-pause-restart" type="button" class="w-full py-2.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer transition">
+                重新開始 (Restart)
+              </button>
+              <button id="btn-pause-menu" type="button" class="w-full py-2.5 rounded border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold cursor-pointer transition">
+                返回主選單 (Menu)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN: Game Over / Victory Modal -->
+        <section id="screen-gameover" class="hidden absolute inset-0 bg-slate-950/90 z-30 flex flex-col items-center justify-center p-4">
+          <div class="max-w-sm w-full p-6 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl text-center">
+            <h2 id="gameover-title" class="text-2xl font-black text-rose-400 mb-2">遊戲結束</h2>
+            
+            <!-- Run Stats Grid -->
+            <div class="grid grid-cols-2 gap-3 my-5">
+              <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800">
+                <span class="block text-[10px] text-slate-400 uppercase tracking-wider">本次得分</span>
+                <span id="gameover-score" class="text-lg font-bold font-mono text-cyan-400">0</span>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800">
+                <span class="block text-[10px] text-slate-400 uppercase tracking-wider">最高紀錄</span>
+                <span id="gameover-best" class="text-lg font-bold font-mono text-amber-400">0</span>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800">
+                <span class="block text-[10px] text-slate-400 uppercase tracking-wider">擊碎磚塊</span>
+                <span id="gameover-bricks" class="text-lg font-bold font-mono text-emerald-400">0</span>
+              </div>
+              <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800">
+                <span class="block text-[10px] text-slate-400 uppercase tracking-wider">最高連擊</span>
+                <span id="gameover-combo" class="text-lg font-bold font-mono text-pink-400">x0</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-3">
+              <button id="btn-retry" type="button" data-start="true" class="w-full py-3 rounded-lg font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20 cursor-pointer transition">
+                再玩一次 (Play Again)
+              </button>
+              <button id="btn-gameover-menu" type="button" class="w-full py-2.5 rounded border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold cursor-pointer transition">
+                返回主選單 (Menu)
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Mobile Touch Launch Bar (Shown on small screens) -->
+      <footer class="w-full px-4 py-2 border-t border-slate-800/80 bg-slate-950/70 flex sm:hidden items-center justify-between text-xs text-slate-400">
+        <span>左右滑動控制板子</span>
+        <button id="btn-mobile-action" type="button" class="py-1.5 px-4 rounded bg-cyan-600 active:bg-cyan-500 text-white font-bold tracking-wider">
+          發射 / 雷射
+        </button>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
